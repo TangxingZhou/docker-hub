@@ -1,0 +1,15 @@
+--index https://mirrors.aliyun.com/pypi/simple
+--trusted-host mirrors.aliyun.com
+
+robotframework
+robotremoteserver
+robotframework-requests
+robotframework-sshlibrary
+robotframework-seleniumlibrary
+kubernetes
+jsonpath-ng
+jinja2
+pytz
+locustio
+pytest
+uwsgi

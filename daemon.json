@@ -1,0 +1,11 @@
+{
+    "insecure-registries": [
+        "172.26.0.13:5000",
+        "172.16.1.99"
+    ],
+    "registry-mirrors": [
+        "https://registry.docker-cn.com",
+        "https://dockerhub.azk8s.cn",
+        "https://hub-mirror.c.163.com"
+    ]
+}

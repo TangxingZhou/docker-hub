@@ -11,7 +11,7 @@ services:
     #network_mode: "host"
 
   locust_slave:
-    image: locust:slave
+    image: locust:worker
     #command: --master-host locust_master
     #restart: always
     volumes:

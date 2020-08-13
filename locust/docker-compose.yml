@@ -1,0 +1,29 @@
+version: '3'
+services:
+  
+  locust_master:
+    image: locust:master
+    #command: --headless -u 100 -r 10 -t 1m expect-workers 1
+    restart: always
+    ports:
+      - "8089:8089"
+      - "5557:5557"
+    #network_mode: "host"
+
+  locust_slave:
+    image: locust:slave
+    #command: --master-host locust_master
+    #restart: always
+    volumes:
+      - "$PWD:/go/src/test.com/worker"
+    network:
+      - locust_master
+
+  locust_worker:
+    image: locustio/locust
+    #command: --master-host locust_master
+    #restart: always
+    volumes:
+      - "$PWD/locustfile.py:/app/locustfile.py"
+    network:
+      - locust_master

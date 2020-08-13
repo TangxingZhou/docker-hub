@@ -1,0 +1,52 @@
+FROM golang:alpine
+
+WORKDIR /go/src/test.com/worker
+
+RUN sed -i 's/\/\/[^\/]*/\/\/mirrors.aliyun.com/g' /etc/apk/repositories \
+    && apk --no-cache update \
+    && apk --no-cache upgrade \
+    && apk --no-cache add gcc libffi-dev build-base autoconf automake libtool bash git
+
+RUN wget https://download.libsodium.org/libsodium/releases/LATEST.tar.gz -P /root \
+    && tar zxf /root/LATEST.tar.gz -C /root \
+    && cd /root/libsodium-stable \
+    && ./configure \
+    && make \
+    && make check \
+    && make install \
+    && echo 'export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/root/libsodium-stable' >> /etc/profile \
+    && echo 'export LD_LIBRARY_PATH=/usr/local/lib' >> /etc/profile \
+    && echo 'export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/root/libsodium-stable' >> /root/.bashrc \
+    && echo 'export LD_LIBRARY_PATH=/usr/local/lib' >> /root/.bashrc
+
+RUN source /etc/profile \
+    && mkdir -p $GOPATH/src/github.com/zeromq \
+    && cd $GOPATH/src/github.com/zeromq \
+    && git clone https://github.com/zeromq/libzmq.git \
+    && cd libzmq \
+    && ./autogen.sh \
+    && ./configure --with-libsodium \
+    && make check \
+    && make install \
+    && ldconfig
+
+RUN source /etc/profile \
+    && cd $GOPATH/src/github.com/zeromq \
+    && git clone https://github.com/zeromq/czmq.git \
+    && cd czmq \
+    && ./autogen.sh \
+    && ./configure \
+    && make check \
+    && make install \
+    && ldconfig
+
+RUN go get github.com/zeromq/goczmq
+
+RUN mkdir -p $GOPATH/src/golang.org/x \
+    && cd $GOPATH/src/golang.org/x \
+    && git clone https://github.com/golang/sys.git \
+    && go get github.com/myzhan/boomer
+
+#ENTRYPOINT ["go", "run"]
+#CMD ["worker.go"]
+CMD ["sh", "-c", "while true; do :; done"]

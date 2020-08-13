@@ -1,0 +1,20 @@
+FROM python:alpine
+
+WORKDIR /app
+
+COPY pip.conf /tmp
+COPY prometheus_exporter.py /app
+
+RUN \
+    sed -i 's/\/\/[^\/]*/\/\/mirrors.aliyun.com/g' /etc/apk/repositories \
+    && apk --no-cache update \
+    && apk --no-cache upgrade \
+    && apk --no-cache add gcc libffi-dev build-base bash \
+    && mkdir -p /root/.pip \
+    && mv /tmp/pip.conf /root/.pip \
+    && pip install locust prometheus_client
+
+EXPOSE 8089 5557
+
+ENTRYPOINT ["locust", "--master", "-f", "prometheus_exporter.py"]
+# CMD ["locust", "--master", "-f", "prometheus_exporter.py", "--headless", "-u", "100", "-r", "10", "-t", "1m", "expect-workers", "1"]

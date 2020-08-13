@@ -1,0 +1,17 @@
+FROM golang:alpine
+
+WORKDIR /go/src/test.com/worker
+
+RUN sed -i 's/\/\/[^\/]*/\/\/mirrors.aliyun.com/g' /etc/apk/repositories \
+    && apk --no-cache update \
+    && apk --no-cache upgrade \
+    && apk --no-cache add gcc libffi-dev build-base bash git
+
+RUN mkdir -p $GOPATH/src/golang.org/x \
+    && cd $GOPATH/src/golang.org/x \
+    && git clone https://github.com/golang/sys.git \
+    && go get github.com/myzhan/boomer
+
+ENTRYPOINT ["go", "run"]
+CMD ["worker.go"]
+#CMD ["sh", "-c", "go build && ./worker"]

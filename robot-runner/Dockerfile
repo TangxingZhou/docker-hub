@@ -1,6 +1,6 @@
 FROM python:alpine
 
-WORKDIR /usr/src/test
+WORKDIR /test
 
 COPY pip.conf /tmp
 COPY requirements.txt /tmp
@@ -13,4 +13,5 @@ RUN \
     && mkdir -p /root/.ssh /root/.pip \
     && echo "StrictHostKeyChecking accept-new" > /root/.ssh/config \
     && mv /tmp/pip.conf /root/.pip \
-    && pip install -r /tmp/requirements.txt
+    && pip install -r /tmp/requirements.txt \
+    && rm -rf ~/.cache/pip

@@ -21,7 +21,7 @@ services:
 
   locust_worker:
     image: locustio/locust
-    #command: --master-host locust_master
+    command: --worker -f /app/locustfile.py --master-host locust_master
     #restart: always
     volumes:
       - "$PWD/locustfile.py:/app/locustfile.py"

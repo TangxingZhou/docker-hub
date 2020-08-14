@@ -7,6 +7,8 @@ RUN \
     && apk --no-cache add bash sshpass curl git \
     && git clone https://github.com/golang/tools.git src/golang.org/x/tools \
     && git clone https://github.com/golang/lint.git src/golang.org/x/lint \
+    && git clone https://github.com/golang/mod.git src/golang.org/x/mod \
+    && git clone https://github.com/golang/xerrors.git src/golang.org/x/xerrors \
     && go get -v -u github.com/mdempsky/gocode \
     && go get -v -u github.com/uudashr/gopkgs/cmd/gopkgs \
     && go get -v -u github.com/ramya-rao-a/go-outline \
@@ -24,4 +26,7 @@ RUN \
     && go get -v -u github.com/sqs/goreturns \
     && go get -v -u golang.org/x/tools/cmd/guru \
     && go get -v -u golang.org/x/tools/cmd/gorename \
+    && go get -v -u golang.org/x/tools/cmd/goimports \
     && go get -v -u golang.org/x/lint/golint
+
+CMD ["sh", "-c", "while true; do :; done"]

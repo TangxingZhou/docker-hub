@@ -13,3 +13,6 @@ pytz
 locustio
 pytest
 uwsgi
+redis
+sqlalchemy
+myclient

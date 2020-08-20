@@ -1,0 +1,49 @@
+version: '3'
+services:
+  
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:alpine
+    ports:
+      - "5672:5672"
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    links:
+      - "db:database"
+
+  mariadb:
+    image: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+    ports:
+      - 3306:3306
+  
+  robot_master:
+    image: dhuztx/robot-runner
+    #command: python run_robot.py --master tests/
+    #restart: always
+    volumes:
+      - "$PWD:/test"
+    ports:
+      - "8088:8088"
+    #network_mode: "host"
+
+  robot_worker:
+    image: dhuztx/robot-runner
+    command: python run_robot.py --worker
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+    #restart: always
+    volumes:
+      - "$PWD:/test"

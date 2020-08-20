@@ -6,13 +6,14 @@ robotremoteserver
 robotframework-requests
 robotframework-sshlibrary
 robotframework-seleniumlibrary
-kubernetes
 jsonpath-ng
 jinja2
 pytz
-locustio
+locust
 pytest
 uwsgi
 redis
 sqlalchemy
 myclient
+#pymssql
+pyodbc

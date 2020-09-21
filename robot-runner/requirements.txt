@@ -9,11 +9,13 @@ robotframework-seleniumlibrary
 jsonpath-ng
 jinja2
 pytz
+celery
 locust
 pytest
 uwsgi
 redis
 sqlalchemy
+sqlalchemy-utils
 myclient
 #pymssql
-pyodbc
+#pyodbc

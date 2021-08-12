@@ -1,0 +1,32 @@
+---
+
+- name: config source of k8s
+  template:
+    src: kubernetes.repo.j2
+    dest: /etc/yum.repos.d/kubernetes.repo
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: install kubeadm, kubelet and 
+  yum:
+    name: [
+      'kubeadm-{{ k8s_version }}',
+      'kubelet-{{ k8s_version }}',
+      'kubectl-{{ k8s_version }}'
+    ]
+    state: present
+
+- name: config cgroup driver for kubelet
+  shell: sed -i 's/\(KUBELET_EXTRA_ARGS=\).*/\1--cgroup-driver=systemd/' /etc/sysconfig/kubelet
+
+- name: start kubelt service
+  service: name=kubelet state=started enabled=yes
+
+- name: join master
+  shell: "{{ hostvars[groups['k8s_master'][0]]['k8s_cluster']['kubeadm_join_command'][0] }}"
+  when: inventory_hostname in groups['k8s_master']
+
+- name: join worker
+  shell: "{{ hostvars[groups['k8s_master'][0]]['k8s_cluster']['kubeadm_join_command'][1] }}"
+  when: inventory_hostname not in groups['k8s_master']

@@ -1,0 +1,18 @@
+kind: ClusterConfiguration
+apiVersion: kubeadm.k8s.io/v1beta2
+clusterName: kubernetes
+kubernetesVersion: v{{ k8s_version }}
+imageRepository: "registry.aliyuncs.com/google_containers"
+tokenTTL: 0
+controlPlaneEndpoint: {{ ansible_nodename }}:6443
+# apiServer:
+  # extraArgs:
+    # advertise-address: {{ ansible_ssh_host }}
+networking:
+  serviceSubnet: "10.1.0.0/16"
+  podSubnet: "10.244.0.0/16"
+  dnsDomain: "cluster.local"
+---
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+cgroupDriver: systemd

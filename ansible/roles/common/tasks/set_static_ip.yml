@@ -1,0 +1,29 @@
+---
+
+# - name: set BOOTPROTO=static
+#   shell: sed -i 's/\(BOOTPROTO=\).*/\1static/g' /etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}
+
+- name: set BOOTPROTO=static
+  lineinfile:
+    path: /etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}
+    regex: 'BOOTPROTO.*dhcp'
+    line: 'BOOTPROTO=static'
+    backup: no
+  when:
+    ansible_os_family | lower == 'redhat'
+
+- name: set ip
+  lineinfile:
+    path: /etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}
+    insertafter: '.'
+    line: '{{ item }}'
+    backup: yes
+  with_items:
+    - IPADDR={{ ansible_default_ipv4.address }}
+    - GATEWAY={{ ansible_default_ipv4.gateway }}
+    - NETMASK={{ ansible_default_ipv4.netmask }}
+  when:
+    ansible_os_family | lower == 'redhat'
+
+- name: restart network
+  service: name=network state=restarted

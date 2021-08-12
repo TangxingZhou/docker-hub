@@ -1,0 +1,20 @@
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2",
+  "experimental": true,
+  "insecure-registries": [
+    "registry.qingteng.cn",
+    "172.16.5.248:5000",
+    "172.16.5.248:6000",
+    "172.16.5.248:7000",
+    "172.16.5.248:8000",
+    "172.16.5.248:8182"
+  ],
+  "registry-mirrors": [
+    "https://sdwhknta.mirror.aliyuncs.com"
+  ]
+}

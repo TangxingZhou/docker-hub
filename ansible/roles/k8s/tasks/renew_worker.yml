@@ -1,0 +1,14 @@
+---
+
+# - name: create config file for kubeadm
+#   template:
+#     src: kubeadm-config.yaml.j2
+#     dest: /tmp/kubeadm-config.yaml
+
+- name: backup old confs
+  shell: mv /etc/kubernetes/{{ item }} mv /etc/kubernetes/{{ item }}.bak
+  with_items:
+    - kubelet.conf
+
+- name: regenerate confs
+  shell: kubeadm init phase kubeconfig kubelet --kubernetes-version v{{ k8s_version }} --apiserver-advertise-address {{ hostvars[groups['k8s_master'][0]]['ansible_ssh_host'] }}

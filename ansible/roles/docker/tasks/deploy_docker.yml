@@ -1,0 +1,60 @@
+---
+
+- name: load modules
+  shell: modprobe br_netfilter
+
+- name: config sysctl
+  copy:
+    src: kubernetes-cri.conf
+    dest: /etc/sysctl.d/k8s.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: apply config for sysctl
+  shell: sysctl --system
+
+- name: install dependencies
+  yum:
+    name: [
+      'yum-utils',
+      'device-mapper-persistent-data',
+      'lvm2'
+    ]
+    state: present
+
+- name: add docker-ce repo
+  shell: yum-config-manager --add-repo {{ docker_yum_repo }}
+
+# - name: add docker-ce repo
+#   yum_repository:
+#     name: docker-ce
+#     description: docker-ce repo
+#     baseurl: "{{ docker_yum_repo }}"
+#     enabled: yes
+
+- name: install docker-ce
+  yum:
+    name: docker-ce-{{ docker_version }}
+    state: present
+
+- name: create a directory for docker
+  file:
+    path: /etc/docker
+    state: directory
+    mode: '0755'
+
+- name: config docker daomon
+  copy:
+    src: daemon.json
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: '0644'
+  # notify: restart docker
+
+- name: start docker service
+  service:
+    name: docker
+    state: started
+    enabled: yes

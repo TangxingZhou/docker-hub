@@ -1,0 +1,10 @@
+---
+# Variables here are applicable to all host groups
+
+
+# docker_yum_repo: http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+
+
+# {{ ansible_distribution | lower }} == centos
+# {{ ansible_distribution_major_version }} == 7
+# {{ ansible_architecture }} == x86_64

@@ -1,0 +1,17 @@
+---
+
+- hosts: docker
+  remote_user: root
+  gather_facts: false
+  # vars:
+  #   docker_version: 19.03.15
+  roles:
+  - docker
+
+- hosts: containerd
+  remote_user: root
+  gather_facts: false
+  # vars:
+  #   containerd_version: 1.4.4
+  roles:
+  - containerd

@@ -1,0 +1,21 @@
+---
+
+- name: uninstall dependencies
+  yum:
+    name: [
+      'kubeadm',
+      'kubelet',
+      'kubectl'
+    ]
+    state: absent
+
+- name: remove folders or files left
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /var/lib/kubelet
+    - /etc/cni/net.d
+    - /etc/kubernetes
+    - $HOME/.kube/config
+

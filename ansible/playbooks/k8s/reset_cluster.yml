@@ -1,0 +1,8 @@
+---
+
+- hosts: k8s
+  remote_user: root
+  gather_facts: false
+  tasks:
+    - name: reset node
+      shell: kubeadm reset -f

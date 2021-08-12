@@ -1,0 +1,38 @@
+---
+
+- hosts: k8s
+  remote_user: root
+  gather_facts: true
+  tasks:
+    - name: add the hostname and ip of nodes in cluster
+      lineinfile:
+        path: /etc/hosts
+        regexp: "{{ hostvars[item]['ansible_nodename'] }}"
+        insertafter: '.'
+        line: "{{ hostvars[item]['ansible_ssh_host'] }} {{ hostvars[item]['ansible_nodename'] }}"
+      with_items:
+        - "{{ groups['k8s'] }}"
+
+- hosts: k8s_master[0]
+  remote_user: root
+  gather_facts: true
+  # vars:
+  #   k8s_version: 1.20.0
+  tasks:
+    - name: renew master
+      include_role:
+        name: k8s
+        tasks_from: renew_master
+    # - debug:
+    #     msg:
+    #       - "{{ hostvars[groups['k8s_master'][0]] }}"
+    #       - "{{ hostvars[groups['k8s_master'][0]]['ansible_ssh_host'] }}"
+
+# - hosts: k8s:!k8s_master
+#   remote_user: root
+#   gather_facts: true
+#   tasks:
+#     - name: renew worker
+#       include_role:
+#         name: k8s
+#         tasks_from: renew_worker

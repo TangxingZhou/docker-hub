@@ -1,0 +1,59 @@
+---
+
+- name: config sysctl
+  copy:
+    src: Centos-{{ ansible_distribution_major_version }}.repo
+    dest: /etc/yum.repos.d/CentOS-Base.repo
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: yum update
+  shell: yum update -y
+
+- name: install tools
+  yum:
+    name: [
+      'epel-release',
+      'wget',
+      'net-tools',
+      'nc',
+      'ntp',
+      'unzip',
+      'jq'
+    ]
+    state: present
+
+- name: disable SELINUX
+  shell: sed -i 's/\(SELINUX=\)\w\+/\1disabled/' /etc/selinux/config
+
+- name: disable swap
+  shell: sed -i '/swap/s/^/#/' /etc/fstab
+
+- name: disable firewall
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
+
+- name: config ntp
+  shell: sed -i 's/centos.pool/asia.pool/g' /etc/ntp.conf
+
+- name: start ntp
+  service:
+    name: ntpd
+    state: started
+    enabled: yes
+
+# - name: reset hostname
+#   shell: hostnamectl set-hostname {{ inventory_hostname }}
+
+- name: reset hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: reboot host and wait for it to restart
+  reboot:
+    connect_timeout: 5
+    post_reboot_delay: 30
+    reboot_timeout: 600

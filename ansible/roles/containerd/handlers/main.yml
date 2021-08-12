@@ -1,0 +1,12 @@
+---
+
+- name: restart containerd
+  service: name=containerd state=restarted
+
+- name: reload containerd
+  service: name=containerd state=reloaded
+
+- name: yum-clean-metadata
+  command: yum clean metadata
+  args:
+    warn: no

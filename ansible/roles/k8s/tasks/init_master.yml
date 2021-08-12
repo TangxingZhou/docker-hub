@@ -1,0 +1,82 @@
+---
+
+- name: config source of k8s
+  template:
+    src: kubernetes.repo.j2
+    dest: /etc/yum.repos.d/kubernetes.repo
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: install kubectl, kubeadm, kubelet
+  yum:
+    name: [
+      'kubeadm-{{ k8s_version }}',
+      'kubelet-{{ k8s_version }}',
+      'kubectl-{{ k8s_version }}'
+    ]
+    state: present
+
+- name: start kubelet service
+  service: name=kubelet state=started enabled=yes
+
+- name: config cgroup driver for kubelet
+  shell: sed -i 's/\(KUBELET_EXTRA_ARGS=\).*/\1--cgroup-driver=systemd/' /etc/sysconfig/kubelet
+
+- name: create config file for kubeadm
+  template:
+    src: kubeadm-config.yaml.j2
+    dest: $HOME/kubeadm-config.yaml
+
+- name: init k8s
+  # shell: kubeadm init --image-repository registry.aliyuncs.com/google_containers --kubernetes-version {{ k8s_version }} --apiserver-advertise-address {{ hostvars.{{ inventory_hostname }}.ansible_ssh_host }}  --pod-network-cidr=10.244.0.0/16 --service-cidr=10.1.0.0/16 --token-ttl=0
+  shell: kubeadm init --config $HOME/kubeadm-config.yaml --upload-certs
+  register: init_output
+
+- name: kubeadm join command
+  set_fact:
+    k8s_cluster:
+      kubeadm_join_command: "{{ init_output.stdout | regex_replace('\\\\', '', multiline=True) | regex_replace('\\n\\s+', '', multiline=True) | regex_findall('kubeadm join.*[0-9a-z]{64}', multiline=True) }}"
+
+- name: config kube
+  shell: mkdir -p $HOME/.kube && cp /etc/kubernetes/admin.conf $HOME/.kube/config && chown $(id -u):$(id -g) $HOME/.kube/config
+
+- name: copy flannel yaml file
+  copy:
+    src: kube-flannel.yml
+    dest: /tmp/
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: deploy flannel
+  shell: kubectl apply -f /tmp/kube-flannel.yml
+  when: kube_network == 'flannel'
+
+# https://docs.projectcalico.org/getting-started/kubernetes/quickstart
+- name: copy calico yaml files
+  copy:
+    src: "{{ item }}"
+    dest: /tmp/
+    owner: root
+    group: root
+    mode: '0644'
+  with_items:
+    - tigera-operator.yaml
+    - custom-resources.yaml
+  when: kube_network == 'calico'
+
+- name: deploy calico
+  shell: kubectl apply -f /tmp/tigera-operator.yaml && kubectl apply -f /tmp/custom-resources.yaml
+  when: kube_network == 'calico'
+
+# https://github.com/cloudnativelabs/kube-router/blob/master/docs/kubeadm.md
+- name: deploy kube-router
+  shell: kubectl apply -f https://raw.githubusercontent.com/cloudnativelabs/kube-router/master/daemonset/kubeadm-kuberouter.yaml
+  when: kube_router == "yes"
+
+- name: store remote kubeconfig
+  fetch:
+    src: ~/.kube/config
+    dest: ~/.kube/config
+  when: fetch_kubeconfig == "yes"

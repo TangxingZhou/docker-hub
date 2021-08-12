@@ -1,0 +1,71 @@
+---
+
+- hosts: k8s
+  remote_user: root
+  gather_facts: true
+  tasks:
+    - name: init node
+      include_role:
+        name: common
+        tasks_from: init_node
+
+- hosts: k8s
+  remote_user: root
+  gather_facts: true
+  # vars:
+  #   set_static_ip: 'false'
+  tasks:
+    - name: set static ip
+      include_role:
+        name: common
+        tasks_from: set_static_ip
+      when:
+        set_static_ip == 'true'
+
+- hosts: k8s
+  remote_user: root
+  gather_facts: true
+  tasks:
+    - name: add the hostname and ip of nodes in cluster
+      lineinfile:
+        path: /etc/hosts
+        regexp: "{{ hostvars[item]['ansible_ssh_host'] }}"
+        insertafter: '.'
+        line: "{{ hostvars[item]['ansible_ssh_host'] }} {{ hostvars[item]['ansible_nodename'] }}"
+      with_items:
+        - "{{ groups['k8s'] }}"
+
+- name: deploy runtime
+  import_playbook: deploy_runtime.yml
+  # vars:
+  #   docker_version: 19.03.15
+  #   containerd_version: 1.4.4
+
+- hosts: k8s_master[0]
+  remote_user: root
+  gather_facts: true
+  # vars:
+  #   k8s_version: 1.20.0
+  tasks:
+    - name: init master
+      include_role:
+        name: k8s
+        tasks_from: init_master
+
+- hosts: k8s:!k8s_master[0]
+  remote_user: root
+  gather_facts: true
+  tasks:
+    - name: join node
+      include_role:
+        name: k8s
+        tasks_from: join_node
+
+- hosts: k8s_master[0]
+  remote_user: root
+  gather_facts: false
+  tasks:
+    - name: remove the taints on the master
+      shell: kubectl taint node {{ hostvars[item]['ansible_nodename'] }} node-role.kubernetes.io/master-
+      with_items:
+        - "{{ groups['k8s_master'] }}"

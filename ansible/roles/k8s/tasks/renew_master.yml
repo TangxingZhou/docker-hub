@@ -1,0 +1,49 @@
+---
+
+- name: store old ip
+  shell: sed -n "s/.*advertise-address=\(.*\)/\1/p" /etc/kubernetes/manifests/kube-apiserver.yaml
+  register: old_ip
+
+- name: update ip
+  shell: sed -i 's/{{ old_ip.stdout }}/{{ ansible_ssh_host }}/g' {{ item }}
+  with_items:
+    - /etc/kubernetes/manifests/etcd.yaml
+    - /etc/kubernetes/manifests/kube-apiserver.yaml
+
+- name: backup old certs
+  shell: mv /etc/kubernetes/pki/{{ item }} /etc/kubernetes/pki/{{ item }}.bak
+  with_items:
+    - apiserver.crt
+    - apiserver.key
+
+- name: regenerate certs
+  shell: kubeadm init phase certs apiserver --apiserver-advertise-address={{ hostvars[groups['k8s_master'][0].ansible_default_ipv4.address }}
+  when: apiserver_advertise_address is defined
+
+- name: regenerate certs
+  shell: kubeadm init phase certs apiserver
+  when: apiserver_advertise_address is not defined
+
+- name: backup old confs
+  shell: mv /etc/kubernetes/{{ item }} /etc/kubernetes/{{ item }}.bak
+  with_items:
+    - admin.conf
+    - controller-manager.conf
+    - kubelet.conf
+    - scheduler.conf
+
+- name: regenerate confs
+  shell: kubeadm init phase kubeconfig all --apiserver-advertise-address={{ hostvars[groups['k8s_master'][0].ansible_default_ipv4.address }}
+  when: apiserver_advertise_address is defined
+
+- name: regenerate confs
+  shell: kubeadm init phase kubeconfig all
+  when: apiserver_advertise_address is not defined
+
+- name: config kube
+  shell: \cp -f /etc/kubernetes/admin.conf $HOME/.kube/config && chown $(id -u):$(id -g) $HOME/.kube/config
+
+- name: update annotation for flannel on node
+  shell: kubectl annotate no {{ ansible_nodename }} flannel.alpha.coreos.com/public-ip={{ ansible_ssh_host }} --overwrite
+
+

@@ -1,0 +1,86 @@
+---
+
+# - hosts: k8s
+#   remote_user: root
+#   gather_facts: true
+#   tasks:
+#     - debug:
+#         msg:
+#           - "{{ ansible_default_ipv4.interface }}"
+#           - "{{ ansible_default_ipv4.address }}"
+#           - "{{ ansible_default_ipv4.gateway }}"
+
+- hosts: agent
+  remote_user: root
+  gather_facts: false
+  # vars:
+  #   set_static_ip: true
+  vars: 
+    - audit_config: {
+      'audit-policy-file': '/etc/kubernetes/audit/audit-default-policy.yaml',
+      'audit-log-path': '/etc/kubernetes/audit/audit.log',
+      'audit-log-maxbackup': '5'
+      }
+  tasks:
+    # - name: set static ip
+    #   include_role:
+    #     name: common
+    #     tasks_from: set_static_ip
+    #   when:
+    #     set_static_ip == 'true'
+    
+    # - name: check state of audit-webhook-kubeconfig.yaml
+    #   stat:
+    #     path: /tmp/audit-webhook-kubeconfig.yaml
+    #   register: audit_webhook_kubeconfig_yaml
+
+    # - name: enable webhook for audit
+    #   meta: end_host
+    #   when: audit_webhook_kubeconfig_yaml.stat.exists == False
+    
+    # - name: backup
+    #   shell: \cp -f /tmp/kube-apiserver.yaml /tmp/kube-apiserver.yaml.bak
+
+    # - name: enable audit log
+    #   lineinfile:
+    #     path: /tmp/kube-apiserver.yaml
+    #     insertafter: '- --'
+    #     line: '{{ item }}'
+    #     backup: no
+    #   with_items:
+    #     - '    - --audit-policy-file=/etc/kubernetes/audit/audit-default-policy.yaml'
+    #     - '    - --audit-log-path=/etc/kubernetes/audit/audit.log'
+    #     - '    - --audit-log-maxbackup=5'
+    
+    # - name: enable audit log
+    #   lineinfile:
+    #     path: /tmp/kube-apiserver.yaml
+    #     regexp: "{{ item.key }}"
+    #     insertafter: '- --'
+    #     line: '    - --{{ item.key }}\\n{{ item.value }}'
+    #   with_dict: {
+    #     'audit-policy-file': '/etc/kubernetes/audit/audit-default-policy.yaml',
+    #     'audit-log-path': '/etc/kubernetes/audit/audit.log',
+    #     'audit-log-maxbackup': '5'
+    #     }
+      # loop: "{{ audit_config|dict2items }}"
+      # with_items:
+      #   - { key: "audit-policy-file" , value: "/etc/kubernetes/audit/audit-default-policy.yaml" }
+    # - name: restore
+    #   shell: \cp -f /tmp/kube-apiserver.yaml.bak /tmp/kube-apiserver.yaml
+    
+    - name: restore kube-apiserver backup yaml
+      shell: sed -n 's/.*claimName:\s*\(.\+\)/\1/p' /tmp/kube-apiserver.yaml
+      register: audit_pvc_name
+
+    - name: enable audit log
+      debug:
+        msg: '123'
+      when: audit_pvc_name.stdout != ''
+      # with_items: 
+      # - { key: 'volumes', value: |
+      # "  - name: audit-config"
+      # "    hostPath:"
+      # "      path: /etc/kubernetes/audit"
+      # "      type: DirectoryOrCreate"
+      # }

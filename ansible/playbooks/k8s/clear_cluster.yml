@@ -1,0 +1,31 @@
+---
+
+- name: kubeadm reset
+  import_playbook: reset_cluster.yml
+
+- hosts: k8s
+  remote_user: root
+  gather_facts: false
+  tasks:
+    - name: clear node
+      include_role:
+        name: k8s
+        tasks_from: clear_node
+
+- hosts: docker
+  remote_user: root
+  gather_facts: false
+  tasks:
+    - name: remove docker
+      include_role:
+        name: docker
+        tasks_from: remove_docker
+
+- hosts: containerd
+  remote_user: root
+  gather_facts: false
+  tasks:
+    - name: remove containerd
+      include_role:
+        name: containerd
+        tasks_from: remove_containerd

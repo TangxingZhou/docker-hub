@@ -1,0 +1,12 @@
+---
+
+- hosts: k8s_master[0]
+  remote_user: root
+  gather_facts: true
+  tasks:
+    - name: get join command
+      shell: kubeadm token create --print-join-command
+      register: join_command
+
+    - name: show join command
+      debug: var=join_command verbosity=0

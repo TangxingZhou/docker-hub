@@ -1,0 +1,59 @@
+---
+
+- name: disable containerd service
+  service:
+    name: containerd
+    state: stopped
+    enabled: no
+
+- name: uninstall dependencies
+  yum:
+    name: [
+      'containerd.io',
+      'yum-utils',
+      'device-mapper-persistent-data',
+      'lvm2'
+    ]
+    state: absent
+
+- name: remove containerd repo (and clean up left-over metadata)
+  yum_repository:
+    name: containerd
+    state: absent
+  notify: yum-clean-metadata
+
+- name: remove kubernetes-cri.conf
+  file:
+    path: /etc/sysctl.d/99-kubernetes-cri.conf
+    state: absent
+
+- name: remove crictl.yaml
+  file:
+    path: /etc/crictl.yaml
+    state: absent
+
+- name: remove config folder for containerd
+  file:
+    path: /etc/containerd
+    state: absent
+
+- name: remove folder for docker
+  file:
+    path: /var/lib/docker
+    state: absent
+
+- name: remove folder for containerd
+  file:
+    path: /var/lib/containerd
+    state: absent
+
+- name: remove folders or files left
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/sysctl.d/99-kubernetes-cri.conf
+    - /etc/crictl.yaml
+    - /etc/containerd
+    - /var/lib/docker
+    - /var/lib/containerd

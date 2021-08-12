@@ -1,0 +1,5 @@
+---
+
+docker_yum_repo: http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+kube_router: no
+fetch_kubeconfig: no

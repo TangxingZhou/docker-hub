@@ -1,0 +1,20 @@
+---
+
+- name: config source of k8s
+  template:
+    src: ingress-config.yaml.j2
+    dest: /tmp/ingress-config.yaml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: install ingress-controller
+  shell: helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx && helm repo update && helm install ingress-nginx ingress-nginx/ingress-nginx -f ingress-config.yaml -n kube-system
+
+- name: Retry a task until a certain condition is met
+  shell: kubectl get pods -n kube-system -o json | jq -r '.items[] | select(.metadata.name | test("ingress-nginx-controller")).status.phase'
+  register: result
+  until: result.stdout == 'Running'
+  retries: 5
+  delay: 10
+

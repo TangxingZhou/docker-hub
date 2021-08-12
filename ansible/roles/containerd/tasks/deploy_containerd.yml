@@ -1,0 +1,66 @@
+---
+
+- name: load modules
+  shell: modprobe overlay && modprobe br_netfilter
+
+- name: config sysctl
+  copy:
+    src: kubernetes-cri.conf
+    dest: /etc/sysctl.d/99-kubernetes-cri.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: apply config for sysctl
+  shell: sysctl --system
+
+- name: install dependencies
+  yum:
+    name: [
+      'yum-utils',
+      'device-mapper-persistent-data',
+      'lvm2'
+    ]
+    state: present
+
+- name: add containerd repo
+  shell: yum-config-manager --add-repo {{ docker_yum_repo }}
+
+- name: install containerd
+  yum:
+    name: containerd.io-{{ containerd_version }}
+    state: present
+
+- name: config crictl
+  copy:
+    src: crictl.yaml
+    dest: /etc/crictl.yaml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: create a directory for containerd
+  file:
+    path: /etc/containerd
+    state: directory
+    mode: '0755'
+
+- name: default config for containerd
+  shell: containerd config default > /etc/containerd/config.toml
+
+- name: config sandbox image
+  shell: sed -i 's/\(sandbox_image.*\)".\+"/\1"registry\.aliyuncs\.com\/google_containers\/pause:3\.2"/' /etc/containerd/config.toml
+
+- name: config cgroup
+  lineinfile:
+    path: /etc/containerd/config.toml
+    insertafter: 'containerd\.runtimes\.runc\.options'
+    line: '            SystemdCgroup = true'
+    backup: yes
+    # validate: "systemctl restart containerd"
+
+- name: start containerd service
+  service:
+    name: containerd
+    state: started
+    enabled: yes
